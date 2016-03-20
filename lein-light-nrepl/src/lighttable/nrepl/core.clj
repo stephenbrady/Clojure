@@ -141,28 +141,6 @@
               (do-flush writer)))
     writer))
 
-(defn out-stream [^java.io.Writer writer]
-  (-> (java.io.PrintWriter. writer false)
-      (org.apache.commons.io.output.WriterOutputStream.)
-      (java.io.PrintStream. true)))
-
-(defn redirect-io [msg]
-  (let [out (out-writer "editor.eval.clj.print" true)
-        err (out-writer "editor.eval.clj.print.err" true)
-        out-s (out-stream out)
-        err-s (out-stream err)]
-    (System/setOut out-s)
-    (System/setErr err-s)
-    (alter-var-root #'*out* (fn [_] out))
-    (alter-var-root #'*err* (fn [_] err))
-    ))
-
-(defn restore-io []
-  (System/setOut old-out)
-  (System/setErr old-err)
-  (alter-var-root #'*out* (fn [_] old-*out*))
-  (alter-var-root #'*err* (fn [_] old-*err*)))
-
 (defn start [info]
   ;(reset! server (start-server :port 7888 :handler (default-handler #'lighttable-ops)))
   )

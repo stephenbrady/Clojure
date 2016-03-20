@@ -23,13 +23,10 @@
     (cond
      (= op "client.close") (do
                              (core/remove-client msg)
-                             (when (empty? @core/clients)
-                               (core/restore-io))
                              (when-not (:remote @core/my-settings)
                                 (System/exit 0)))
      (= op "client.init") (do
                             (core/capture-client msg)
-                            (core/redirect-io msg)
                             (when-let [setts (-> msg with-lt-data :settings)]
                               (core/settings! setts))
                             (core/respond msg "client.settings" (dissoc @core/my-settings :project))
