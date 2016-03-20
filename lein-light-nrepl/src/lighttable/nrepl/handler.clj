@@ -1,16 +1,12 @@
 (ns lighttable.nrepl.handler
-  (:require [clojure.tools.nrepl.server :refer [start-server stop-server default-handler]]
-            [clojure.tools.nrepl.transport :as transport]
-            [clojure.tools.nrepl.middleware.session :refer [session]]
+  (:require [clojure.tools.nrepl.middleware.session :refer [session]]
             [clojure.tools.nrepl.middleware.interruptible-eval :refer [interruptible-eval *msg*]]
-            [clojure.tools.nrepl.misc :refer [response-for returning]]
             [clojure.tools.nrepl.middleware :refer [set-descriptor!]]
             [lighttable.nrepl.core :as core]
             [lighttable.nrepl.eval :as eval]
             [lighttable.nrepl.cljs :as cljs]
             [lighttable.nrepl.doc :as doc]
-            lighttable.nrepl.auto-complete
-            [clojure.repl :as repl]))
+            lighttable.nrepl.auto-complete))
 
 (defn with-lt-data [msg]
   (if (or (not (:data msg))
