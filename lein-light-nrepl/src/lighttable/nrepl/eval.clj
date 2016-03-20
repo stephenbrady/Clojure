@@ -132,7 +132,7 @@
      :ns (->ns-sym *ns*)}))
 
 (defn find-eval-frame [stack]
-  (first (filter #(re-seq  #"\$eval[\d]+" (.getClassName %)) stack)))
+  (first (filter #(re-seq  #"\$eval[\d]+" (.getClassName ^java.lang.StackTraceElement %)) stack)))
 
 (defn ->ns [content]
   (try
@@ -150,7 +150,11 @@
       (catch Exception e
         nil))))
 
-(defn get-line [e pos]
+(defn get-line-number
+  [^java.lang.StackTraceElement element]
+  (.getLineNumber element))
+
+(defn get-line [^java.lang.Throwable e pos]
   (let [stack (.getStackTrace e)
         e-str (str e)]
     {:line (or (-> (re-seq #"starting at line ([\d]+)" e-str) first second)
@@ -159,7 +163,7 @@
                  (-> stack
                      (find-eval-frame)
                      (or (aget stack 0))
-                     (.getLineNumber))))}))
+                     get-line-number)))}))
 
 (defn normalize-ns [ns path]
   (let [ns (str ns)

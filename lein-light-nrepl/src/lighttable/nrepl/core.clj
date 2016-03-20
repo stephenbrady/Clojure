@@ -12,8 +12,8 @@
 (def ^{:dynamic true} *ltmsg* nil)
 (def server (atom nil))
 (def clients (atom {}))
-(def old-out System/out)
-(def old-err System/err)
+(def ^java.io.PrintStream old-out System/out)
+(def ^java.io.PrintStream old-err System/err)
 (def old-*out* *out*)
 (def old-*err* *err*)
 (def my-settings (atom {:name "clj"
@@ -34,7 +34,7 @@
 
 (def no-queue? #{"editor.eval.clj.cancel" "client.cancel-all"})
 
-(defn lt-op? [op]
+(defn lt-op? [^String op]
   (if-not op
     nil
   (or (> (.indexOf op "editor.") -1)
@@ -111,36 +111,37 @@
         writer-id (gensym "writer")
         closed (atom false)
         print-id (atom 0)
-        length (fn [^java.io.Writer me] (.. me getBuffer length))
-        do-flush (fn [^java.io.Writer me]
+        length (fn [^java.io.StringWriter me] (.. me getBuffer length))
+        do-flush (fn [^java.io.StringWriter me]
                    (locking o
                      (let [len (length me)]
                        (when (> len 0)
-                         (let [text (.. me getBuffer (substring 0 len))]
+                         (let [text (.. me getBuffer (substring (int 0) (int len)))]
                            (when echo?
                              (.print old-out text))
                            (if *ltmsg*
                              (respond *ltmsg* (or ev :editor.eval.clj.print) {:out text :id (str writer-id @print-id)})
                              (broadcast (or ev :editor.eval.clj.print) {:out text :id (str writer-id @print-id)}))
-                           (.. me getBuffer (delete 0 len)))))))
+                           (.. me getBuffer (delete (int 0) (int len))))))))
         writer (proxy [java.io.StringWriter] []
                  (close [] (reset! closed true))
-                 (write [& [x ^Integer off ^Integer len]]
-                        (locking o
-                          (cond
-                           len (proxy-super write x off len)
-                           off (proxy-super write x off)
-                           :else (proxy-super write x))))
+                 (write ([x]
+                         (let [^java.io.StringWriter this this]
+                           (locking o
+                             (proxy-super write x))))
+                        ([x ^Integer off ^Integer len]
+                         (let [^java.io.StringWriter this this]
+                           (locking o
+                             (proxy-super write x off len)))))
                  (flush []
                         (do-flush this)
-                        (swap! print-id inc)
-                        ))]
+                        (swap! print-id inc)))]
     (future (while (not @closed)
               (Thread/sleep 50)
               (do-flush writer)))
     writer))
 
-(defn out-stream [writer]
+(defn out-stream [^java.io.Writer writer]
   (-> (java.io.PrintWriter. writer false)
       (org.apache.commons.io.output.WriterOutputStream.)
       (java.io.PrintStream. true)))
