@@ -6,8 +6,19 @@
 (defn completion [string]
   {:completion string})
 
+(def completion-xf
+  (map completion))
+
+(def remove-beh-xf
+  (remove #(> (.indexOf ^String % "__BEH__") -1)))
+
+(def completions-xf
+  (comp remove-beh-xf completion-xf))
+
 (defn completions [strings]
-  (map completion (remove #(> (.indexOf % "__BEH__") -1) strings)))
+  (sequence completions-xf strings))
+
+(def clojure-vars (complete.core/ns-vars 'clojure.core))
 
 (defn clj-hints-for-ns [ns]
   (completions
@@ -15,7 +26,7 @@
     ;; special forms
     complete.core/special-forms
     ;; clojure.core
-    (complete.core/ns-vars 'clojure.core)
+    clojure-vars
     ;; local vars
     (complete.core/ns-vars ns)
     ;; local classes
