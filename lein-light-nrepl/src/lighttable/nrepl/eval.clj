@@ -1,16 +1,17 @@
 (ns lighttable.nrepl.eval
   (:require [clojure.pprint :refer [pprint]]
+            [clojure.string :as string]
             [clojure.test :as test]
             [lighttable.nrepl.core :as core]
             [lighttable.nrepl.exception :as exception]
-            [clojure.string :as string]
             [clojure.tools.nrepl.transport :as transport]
             [clojure.tools.nrepl.middleware :refer [set-descriptor!]]
             [clojure.tools.nrepl.middleware.interruptible-eval :refer [interruptible-eval *msg*]]
             [clojure.tools.nrepl.misc :refer [response-for returning]]
             [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt])
-  (:import java.io.Writer))
+  (:import java.io.Writer
+           [clojure.lang ExceptionInfo]))
 
 (defn- try-read [rdr feature]
   {:pre [(#{:clj :cljs} feature)]}
@@ -79,6 +80,51 @@
 (defn truncate [v]
   v)
 
+(defn try-handler
+  [handler e opts f]
+  (try
+    (handler e opts f)
+    (catch Throwable e2
+      (let [msg (str "**Exception thrown while handling exception: " (.getName (class e)) ": " (.getMessage e))]
+        {:meta (meta f)
+         :form f
+         :result msg
+         :stack msg
+         :ex true}))))
+
+(defn handle-schema-ex-info
+  [^ExceptionInfo e opts f]
+  (let [{:keys [type schema-name schema value error]} (ex-data e)]
+    {:meta (meta f)
+     :form f
+     :result (str "Schema Exception Thrown: " schema-name)
+     :stack (exception/clean-trace-ex-info e)
+     :ex true}))
+
+(defn default-handle-ex-info
+  [^ExceptionInfo e opts f]
+  {:meta (meta f)
+   :form f
+   :result (str "Exception Thrown: " (.getMessage e))
+   :stack (exception/clean-trace-ex-info e)
+   :ex true})
+
+(defn handle-ex-info
+  [^ExceptionInfo e opts f]
+  (if (string/starts-with? (.getMessage e) "Value does not match schema")
+    (handle-schema-ex-info e opts f)
+    (default-handle-ex-info e opts f)))
+
+(defn default-thrown-handler
+  [e opts f]
+  (let [trace (exception/clean-trace e)
+        msg (or (.getMessage e) (str e))]
+    {:meta (meta f)
+     :form f
+     :result msg
+     :stack trace
+     :ex true}))
+
 (defn ->result [opts f]
   (try
     (let [m (meta? f)
@@ -88,23 +134,12 @@
        :result (if (:verbatim opts)
                  res
                  (clean-serialize res opts))})
+
+    (catch ExceptionInfo e
+      (try-handler handle-ex-info e opts f))
+
     (catch Throwable e
-      (try
-        (let [trace (exception/clean-trace e)
-              msg (or (.getMessage e) (str e))]
-          {:meta (meta f)
-           :form f
-           :result msg
-           :stack trace
-           :ex true})
-        (catch Throwable e2
-          (let [msg (str (.getName (class e)) ": " (.getMessage e) (ex-data e))]
-            {:meta (meta f)
-             :form f
-             :result msg
-             :stack msg
-             :ex true})
-          )))))
+      (try-handler default-thrown-handler e opts f))))
 
 (defn require|create-ns [ns]
   (try

@@ -18,5 +18,13 @@
       (string/replace reader-trace "")
       (string/replace analyzer-trace "")
       (string/replace cljs-eval "")
+      ))
+
+(defn clean-trace-ex-info [e]
+  (-> (exc/pst-str e)
+      (string/replace eval-trace "")
+      (string/replace reader-trace "")
+      (string/replace analyzer-trace "")
+      (string/replace cljs-eval "")
       (add-ex-data e)
       ))
