@@ -53,10 +53,14 @@
   (if (instance? clojure.lang.IObj thing)
     (meta thing)))
 
+(defn pprint->string
+  [form]
+  (string/trim-newline (with-out-str (pprint form))))
+
 (defn clean-serialize [res & [opts]]
   (binding [*print-length* (or (:print-length opts) *print-length* 1000)]
     (cond
-     (fn? res) 'fn
+     (fn? res) (.getSimpleName ^Class (type res))
      (var? res) (if-not (:allow-var? opts)
                   res
                   (str res)
@@ -64,11 +68,13 @@
      (nil? res) "nil"
      (false? res) "false"
      (and (instance? clojure.lang.Atom res)
-          (:result opts)) (str "atom[" @res "]")
-     (instance? clojure.lang.Atom res) (str "atom")
+          (:result opts)) (str "atom<" @res ">")
+     (and (instance? clojure.lang.Volatile res)
+          (:result opts)) (str "volatile<" @res ">")
+     (instance? clojure.lang.IType res) (pprint->string res)
      ;(is-non-clojure? res) (str res)
      (and (string? res) (:verbatim opts)) res
-     :else (pr-str res))))
+     :else (pprint->string res))))
 
 (defn truncate [v]
   v)
