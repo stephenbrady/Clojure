@@ -4,6 +4,7 @@
             [clojure.test :as test]
             [lighttable.nrepl.core :as core]
             [lighttable.nrepl.exception :as exception]
+            clojure.main
             [clojure.tools.nrepl.transport :as transport]
             [clojure.tools.nrepl.middleware :refer [set-descriptor!]]
             [clojure.tools.nrepl.middleware.interruptible-eval :refer [interruptible-eval *msg*]]
@@ -61,7 +62,7 @@
 (defn clean-serialize [res & [opts]]
   (binding [*print-length* (or (:print-length opts) *print-length* 1000)]
     (cond
-     (fn? res) (.getSimpleName ^Class (type res))
+     (fn? res) (clojure.main/demunge (.getCanonicalName ^Class (type res)))
      (var? res) (if-not (:allow-var? opts)
                   res
                   (str res)
