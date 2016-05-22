@@ -2,6 +2,7 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as string]
             [clojure.test :as test]
+            fipp.clojure
             [lighttable.nrepl.core :as core]
             [lighttable.nrepl.exception :as exception]
             clojure.main
@@ -57,7 +58,7 @@
 
 (defn pprint->string
   [form]
-  (string/trim-newline (with-out-str (pprint form))))
+  (string/trim-newline (with-out-str (fipp.clojure/pprint form))))
 
 (defn clean-serialize [res & [opts]]
   (binding [*print-length* (or (:print-length opts) *print-length* 1000)]

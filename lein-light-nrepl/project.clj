@@ -9,5 +9,6 @@
                  [clj-stacktrace "0.2.8"]
                  [org.clojure/clojurescript "0.0-3308"
                    :exclusions [org.apache.ant/ant]]
-                 [clojure-complete "0.2.4"]]
+                 [clojure-complete "0.2.4"]
+                 [fipp "0.6.5"]]
   :jvm-opts ["-Xmx1g"])
