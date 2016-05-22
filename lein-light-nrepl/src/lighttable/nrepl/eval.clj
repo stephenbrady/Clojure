@@ -70,10 +70,12 @@
      (nil? res) "nil"
      (false? res) "false"
      (and (instance? clojure.lang.Atom res)
-          (:result opts)) (str "atom<" @res ">")
+          (:result opts)) (str "Atom<" @res ">")
      (and (instance? clojure.lang.Volatile res)
-          (:result opts)) (str "volatile<" @res ">")
+          (:result opts)) (str "Volatile<" @res ">")
      (instance? clojure.lang.IType res) (pprint->string res)
+     (instance? clojure.lang.Namespace res)
+     (str "Namespace<" res ">")
      ;(is-non-clojure? res) (str res)
      (and (string? res) (:verbatim opts)) res
      :else (pprint->string res))))
