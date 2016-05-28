@@ -73,11 +73,15 @@
     (cljs-hints-for-ns (symbol ns-name) nss)))
 
 (defmethod core/handle "editor.clj.hints" [{:keys [session ns path] :as msg}]
-  (let [ns (eval/normalize-ns ns path)]
-    (core/respond msg "editor.clj.hints.result" (clj-hints ns) "json")
+  (let [ns (eval/normalize-ns ns path)
+        hints (try (clj-hints ns)
+                (catch Throwable t [""]))]
+    (core/respond msg "editor.clj.hints.result" hints "json")
     @session))
 
 (defmethod core/handle "editor.cljs.hints" [{:keys [session ns path] :as msg}]
-  (let [ns (eval/normalize-ns ns path)]
-    (core/respond msg "editor.clj.hints.result" (cljs-hints ns) "json")
+  (let [ns (eval/normalize-ns ns path)
+        hints (try (cljs-hints ns)
+                (catch Throwable t [""]))]
+    (core/respond msg "editor.clj.hints.result" hints "json")
     @session))
