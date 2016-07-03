@@ -18,7 +18,8 @@
 (defn- try-read [rdr feature]
   {:pre [(#{:clj :cljs} feature)]}
   (when rdr
-    (reader/read {:read-cond :allow :features #{feature} :eof ::EOF} rdr)))
+    (binding [reader/*data-readers* *data-readers*]
+      (reader/read {:read-cond :allow :features #{feature} :eof ::EOF} rdr))))
 
 (defn lined-read
   ([string] (lined-read string :clj))
